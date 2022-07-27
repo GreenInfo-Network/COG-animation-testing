@@ -34,42 +34,40 @@
     style: 'mapbox://styles/nathanielrindlaub/ck2xppe0z1ll01dmr159zbqza',
     maxZoom: 17,
     minZoom: 4,
-    zoom: 8.9,
-    center: [-121.86896, 36.4251],
+    zoom: 10.03,
+    center: [-121.873869, 36.4391176],
   });
  
-  // const frameCount = 5;
-  // let currentImage = 0;
+  function addRasterLayer(i, urls) {
+    console.log(urls[i]['TiTiler URL'])
+    map.addSource('kelp' + i, {
+      'type'       : 'raster',
+      'tiles'      : [urls[i]['TiTiler URL']],
+      'tileSize'   : 256,
+    });
+ 
+    map.addLayer({
+      'id'     : 'kelp' + i,
+      'type'   : 'raster',
+      'source' : 'kelp' + i,
+      'paint'  : {
+        'raster-opacity': 0
+      }
+    });
+  }
+
+  function setRasterLayerVisibility(id, opacity, transition = {duration:0, delay:0}) {
+    map.setPaintProperty(id, 'raster-opacity-transition', transition);
+    map.setPaintProperty(id, 'raster-opacity', opacity);
+  }
+
+  function showRasterLayer(id) {
+    setRasterLayerVisibility(id, 1);
+  }
    
-  // function getPath() {
-  //   return `https://docs.mapbox.com/mapbox-gl-js/assets/radar${currentImage}.gif`;
-  // }
-   
-  // map.on('load', () => {
-  //   map.addSource('radar', {
-  //     type: 'image',
-  //     url: getPath(),
-  //     coordinates: [
-  //     [-80.425, 46.437],
-  //     [-71.516, 46.437],
-  //     [-71.516, 37.936],
-  //     [-80.425, 37.936]
-  //   ]
-  // });
-  // map.addLayer({
-  //   id: 'radar-layer',
-  //     'type': 'raster',
-  //     'source': 'radar',
-  //     'paint': {
-  //     'raster-fade-duration': 0
-  //   }
-  // });
-   
-  // setInterval(() => {
-  //     currentImage = (currentImage + 1) % frameCount;
-  //     map.getSource('radar').updateImage({ url: getPath() });
-  //   }, 200);
-  // });
+  function hideRasterLayer(id) {
+    setRasterLayerVisibility(id, 0);
+  }
 
   // Start things off by getting the CSV of tile URLs
   fetch('./tile_urls.csv').then((response) => {
@@ -82,55 +80,64 @@
     const urls = parsed.data;
     console.log(urls);
 
-    let sourceroot = 'm';
-    let sourcecount = 1;
-    let source = sourceroot + sourcecount;
-    let layer = `${source}-layer`;
+    let frameCount = urls.length;
+    let currentImageOffset = 0;
+    let lastImageOffset = 0;
 
     // Create and add the map source and map layers from the URLs
     map.on('load', () => {
-      map.addSource(source, {
-        type: 'raster',
-        tiles: [
-          'https://titiler.xyz/cog/tiles/WebMercatorQuad/{z}/{x}/{y}?url=https%3A%2F%2Fkelpwatch-zarr.s3.us-west-1.amazonaws.com%2Fcogs%2F1984_03.tif&bidx=1&rescale=0,900&colormap_name=bugn_r'
-        ],
-      });
-      map.addLayer({
-        id: layer,
-        'type': 'raster',
-        'source': source,
-      });
+      // load all of the tiles at 0 opacity
+      for (let i = 0; i < frameCount; i++) {
+        addRasterLayer(i, urls);
+      }
+
+      // show the very first one
+      showRasterLayer('kelp0');
+
+      // then show and hide one every second, one by one, changing opacity from 0 to 1 at each step
+      setInterval(() => {
+        lastImageOffset = currentImageOffset;
+        currentImageOffset++;
+    
+        if (currentImageOffset >= frameCount) currentImageOffset = 0;
+    
+        hideRasterLayer('kelp' + lastImageOffset);
+        showRasterLayer('kelp' + currentImageOffset);
+      
+      }, 1000);
+
     });
 
     // start animating
-    const interval = setInterval(() => {
+    // const interval = setInterval(() => {
 
-      // currentImage = (currentImage + 1) % frameCount;
-      // map.getSource('radar').updateImage({ url: getPath() });
-      map.removeLayer(layer);
-      map.removeSource(source);
-      sourcecount += 1;
-      source = sourceroot + sourcecount;
-      layer = `${source}-layer`;
+    //   // currentImage = (currentImage + 1) % frameCount;
+    //   // map.getSource('radar').updateImage({ url: getPath() });
+    //   map.removeLayer(layer);
+    //   map.removeSource(source);
+    //   sourcecount += 1;
+    //   source = sourceroot + sourcecount;
+    //   layer = `${source}-layer`;
 
-      let tile = urls[sourcecount]['TiTiler URL'];
+    //   let tile = urls[sourcecount]['TiTiler URL'];
 
-      map.addSource(source, {
-        type: 'raster',
-        tiles: [tile],
-      });
+    //   map.addSource(source, {
+    //     type: 'raster',
+    //     tiles: [tile],
+    //   });
 
-      map.addLayer({
-        id: layer,
-        'type': 'raster',
-        'source': source,
-      });
+    //   map.addLayer({
+    //     id: layer,
+    //     'type': 'raster',
+    //     'source': source,
+    //   });
 
-      if (sourcecount >= urls.length) {
-        clearInterval(interval)
-      }
+    //   console.log(sourcecount)
+    //   if (sourcecount >= urls.length) {
+    //     clearInterval(interval)
+    //   }
 
-    }, 1000);
+    // }, 1000);
 
 
   }).catch((error) => {
