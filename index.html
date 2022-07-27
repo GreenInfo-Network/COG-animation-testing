@@ -13,20 +13,65 @@
 
 
 <style>
-  body { margin: 0; padding: 0; }
+  body { 
+    margin: 0; padding: 0; 
+  }
   #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-  #message { position: relative; top: 20px; left: 20px; background: #fff; border: 1px solid #555; border-radius: 10px; z-index: 99999; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; font-size: 25px; font-weight: 500; font-family: sans-serif; }
+  
+  select {
+    font-size: 25px; font-weight: 500; font-family: sans-serif;
+
+    height: 50px;
+    width: auto;
+    position: relative;
+    top: 20px;
+    left: 20px;
+    z-index: 100000;
+    padding:  0 1em;
+  }
+
+  select:disabled {
+    cursor: not-allowed;
+  }
+
+  #message { 
+    font-size: 25px; font-weight: 500; font-family: sans-serif;
+    position: relative; 
+    top: 40px; left: 20px; 
+    background: #fff; 
+    border: 1px solid #555; 
+    border-radius: 10px; 
+    z-index: 99999; 
+    width: 50px; 
+    height: 50px; 
+    display: flex; justify-content: center; align-items: center; 
+  }
 </style>
 </head>
 
 <body>
 
 <div id="map">
+  <select disabled id="number" onchange="select_change()">
+    <option selected value="10">Animate first 10 URLs</option>
+    <option value="20">Animate first 20 URLs</option>
+    <option value="30">Animate first 30 URLs</option>
+    <option value="40">Animate first 40 URLs</option>
+    <option value="50">Animate first 50 URLs</option>
+    <option value="117">Animate All</option>
+  </select>
   <div id="message">1</div>
 </div>
 
 
 <script>
+
+  frameCount = 10;
+
+  function select_change() {
+    let d = document.getElementById('number').value;
+    doInterval(d);
+  }
 
   // TNC MB TOKEN
   const MAPBOX_TOKEN  = 'pk.eyJ1IjoibmF0aGFuaWVscmluZGxhdWIiLCJhIjoiY2pqcmQ4cTU4MmdvaDN2bzF0Yjd5b29ucyJ9.YU0K_oBS-qHGQ8S0ExUYnQ'
@@ -72,6 +117,31 @@
     setRasterLayerVisibility(id, 0);
   }
 
+  function doInterval(frameCount) {
+    let currentImageOffset = 0;
+    let lastImageOffset = 0;
+
+    if( window.currentInterval != undefined && window.currentInterval != 'undefined' ){
+        window.clearInterval(window.currentInterval);
+    }
+
+    // show and hide one every second, one by one, changing opacity from 0 to 1 at each step
+    window.currentInterval = setInterval(() => {
+      lastImageOffset = currentImageOffset;
+      currentImageOffset++;
+  
+      if (currentImageOffset >= frameCount) currentImageOffset = 0;
+  
+      hideRasterLayer('kelp' + lastImageOffset);
+      showRasterLayer('kelp' + currentImageOffset);
+
+      msg = document.getElementById('message');
+      msg.innerText = '' + (currentImageOffset + 1);
+    
+    }, 1000);
+
+  }
+
   // Start things off by getting the CSV of tile URLs
   fetch('./tile_urls.csv').then((response) => {
     if (response.ok) {
@@ -83,70 +153,22 @@
     const urls = parsed.data;
     console.log(urls);
 
-    // let frameCount = urls.length;
-    let frameCount = 10;
-
-    let currentImageOffset = 0;
-    let lastImageOffset = 0;
-
     // Create and add the map source and map layers from the URLs
     map.on('load', () => {
-      // load all of the tiles at 0 opacity
-      for (let i = 0; i < frameCount; i++) {
+      // load ALL of the tiles at 0 opacity
+      for (let i = 0; i < urls.length; i++) {
         addRasterLayer(i, urls);
       }
 
       // show the very first one
       showRasterLayer('kelp0');
 
-      // then show and hide one every second, one by one, changing opacity from 0 to 1 at each step
-      setInterval(() => {
-        lastImageOffset = currentImageOffset;
-        currentImageOffset++;
-    
-        if (currentImageOffset >= frameCount) currentImageOffset = 0;
-    
-        hideRasterLayer('kelp' + lastImageOffset);
-        showRasterLayer('kelp' + currentImageOffset);
+      // do the interval, but only for the default number of URLs specified at the top
+      doInterval(frameCount);
 
-        msg = document.getElementById('message');
-        msg.innerText = '' + (currentImageOffset + 1);
-      
-      }, 1000);
-
+      // enable the select now that we're all loaded
+      document.getElementById('number').removeAttribute('disabled');
     });
-
-    // start animating
-    // const interval = setInterval(() => {
-
-    //   // currentImage = (currentImage + 1) % frameCount;
-    //   // map.getSource('radar').updateImage({ url: getPath() });
-    //   map.removeLayer(layer);
-    //   map.removeSource(source);
-    //   sourcecount += 1;
-    //   source = sourceroot + sourcecount;
-    //   layer = `${source}-layer`;
-
-    //   let tile = urls[sourcecount]['TiTiler URL'];
-
-    //   map.addSource(source, {
-    //     type: 'raster',
-    //     tiles: [tile],
-    //   });
-
-    //   map.addLayer({
-    //     id: layer,
-    //     'type': 'raster',
-    //     'source': source,
-    //   });
-
-    //   console.log(sourcecount)
-    //   if (sourcecount >= urls.length) {
-    //     clearInterval(interval)
-    //   }
-
-    // }, 1000);
-
 
   }).catch((error) => {
     console.log('Something went wrong.', error)
