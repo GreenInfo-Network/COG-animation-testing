@@ -15,12 +15,15 @@
 <style>
   body { margin: 0; padding: 0; }
   #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  #message { position: relative; top: 20px; left: 20px; background: #fff; border: 1px solid #555; border-radius: 10px; z-index: 99999; width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; font-size: 25px; font-weight: 500; font-family: sans-serif; }
 </style>
 </head>
 
 <body>
 
-<div id="map"></div>
+<div id="map">
+  <div id="message">1</div>
+</div>
 
 
 <script>
@@ -80,7 +83,9 @@
     const urls = parsed.data;
     console.log(urls);
 
-    let frameCount = urls.length;
+    // let frameCount = urls.length;
+    let frameCount = 10;
+
     let currentImageOffset = 0;
     let lastImageOffset = 0;
 
@@ -103,6 +108,9 @@
     
         hideRasterLayer('kelp' + lastImageOffset);
         showRasterLayer('kelp' + currentImageOffset);
+
+        msg = document.getElementById('message');
+        msg.innerText = '' + (currentImageOffset + 1);
       
       }, 1000);
 
