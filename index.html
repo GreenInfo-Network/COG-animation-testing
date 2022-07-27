@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Animate a series of images</title>
+<link rel="icon" href="data:;base64,iVBORwOKGO=" />
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.9.2/mapbox-gl.js"></script>
+
+<!-- Papa Parse for csv parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/4.3.7/papaparse.min.js"></script>
+
+
+<style>
+  body { margin: 0; padding: 0; }
+  #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+</style>
+</head>
+
+<body>
+
+<div id="map"></div>
+
+
+<script>
+
+  // TNC MB TOKEN
+  const MAPBOX_TOKEN  = 'pk.eyJ1IjoibmF0aGFuaWVscmluZGxhdWIiLCJhIjoiY2pqcmQ4cTU4MmdvaDN2bzF0Yjd5b29ucyJ9.YU0K_oBS-qHGQ8S0ExUYnQ'
+
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/nathanielrindlaub/ck2xppe0z1ll01dmr159zbqza',
+    maxZoom: 17,
+    minZoom: 4,
+    zoom: 8.9,
+    center: [-121.86896, 36.4251],
+  });
+ 
+  // const frameCount = 5;
+  // let currentImage = 0;
+   
+  // function getPath() {
+  //   return `https://docs.mapbox.com/mapbox-gl-js/assets/radar${currentImage}.gif`;
+  // }
+   
+  // map.on('load', () => {
+  //   map.addSource('radar', {
+  //     type: 'image',
+  //     url: getPath(),
+  //     coordinates: [
+  //     [-80.425, 46.437],
+  //     [-71.516, 46.437],
+  //     [-71.516, 37.936],
+  //     [-80.425, 37.936]
+  //   ]
+  // });
+  // map.addLayer({
+  //   id: 'radar-layer',
+  //     'type': 'raster',
+  //     'source': 'radar',
+  //     'paint': {
+  //     'raster-fade-duration': 0
+  //   }
+  // });
+   
+  // setInterval(() => {
+  //     currentImage = (currentImage + 1) % frameCount;
+  //     map.getSource('radar').updateImage({ url: getPath() });
+  //   }, 200);
+  // });
+
+  // Start things off by getting the CSV of tile URLs
+  fetch('./tile_urls.csv').then((response) => {
+    if (response.ok) {
+      return response.text();
+    }
+    return Promise.reject(response)
+  }).then(function(text) {
+    const parsed = Papa.parse(text, {header: true, skipEmptyLines: 'greedy'});
+    const urls = parsed.data;
+    console.log(urls);
+
+    let sourceroot = 'm';
+    let sourcecount = 1;
+    let source = sourceroot + sourcecount;
+    let layer = `${source}-layer`;
+
+    // Create and add the map source and map layers from the URLs
+    map.on('load', () => {
+      map.addSource(source, {
+        type: 'raster',
+        tiles: [
+          'https://titiler.xyz/cog/tiles/WebMercatorQuad/{z}/{x}/{y}?url=https%3A%2F%2Fkelpwatch-zarr.s3.us-west-1.amazonaws.com%2Fcogs%2F1984_03.tif&bidx=1&rescale=0,900&colormap_name=bugn_r'
+        ],
+      });
+      map.addLayer({
+        id: layer,
+        'type': 'raster',
+        'source': source,
+      });
+    });
+
+    // start animating
+    const interval = setInterval(() => {
+
+      // currentImage = (currentImage + 1) % frameCount;
+      // map.getSource('radar').updateImage({ url: getPath() });
+      map.removeLayer(layer);
+      map.removeSource(source);
+      sourcecount += 1;
+      source = sourceroot + sourcecount;
+      layer = `${source}-layer`;
+
+      let tile = urls[sourcecount]['TiTiler URL'];
+
+      map.addSource(source, {
+        type: 'raster',
+        tiles: [tile],
+      });
+
+      map.addLayer({
+        id: layer,
+        'type': 'raster',
+        'source': source,
+      });
+
+      if (sourcecount >= urls.length) {
+        clearInterval(interval)
+      }
+
+    }, 1000);
+
+
+  }).catch((error) => {
+    console.log('Something went wrong.', error)
+  });
+
+
+
+
+</script>
+ 
+</body>
+</html>
