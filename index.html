@@ -42,7 +42,7 @@
     border: 1px solid #555; 
     border-radius: 10px; 
     z-index: 99999; 
-    width: 50px; 
+    width: 160px; 
     height: 50px; 
     display: flex; justify-content: center; align-items: center; 
   }
@@ -52,21 +52,19 @@
 <body>
 
 <div id="map">
-  <select disabled id="number" onchange="select_change()">
-    <option selected value="10">Animate first 10 URLs</option>
-    <option value="20">Animate first 20 URLs</option>
-    <option value="30">Animate first 30 URLs</option>
-    <option value="40">Animate first 40 URLs</option>
-    <option value="50">Animate first 50 URLs</option>
-    <option value="117">Animate All</option>
+  <select id="number" onchange="select_change()">
+    <option value="10">Animate first 10 quarters</option>
+    <option value="20">Animate first 20 quarters</option>
+    <option value="30">Animate first 30 quarters</option>
+    <option value="40">Animate first 40 quarters</option>
+    <option value="50">Animate first 50 quarters</option>
+    <option selected value="151">Animate All</option>
   </select>
-  <div id="message">1</div>
+  <div id="message">1: 1984_01</div>
 </div>
 
 
 <script>
-
-  frameCount = 10;
 
   function select_change() {
     let d = document.getElementById('number').value;
@@ -76,6 +74,7 @@
   // TNC MB TOKEN
   const MAPBOX_TOKEN  = 'pk.eyJ1IjoibmF0aGFuaWVscmluZGxhdWIiLCJhIjoiY2pqcmQ4cTU4MmdvaDN2bzF0Yjd5b29ucyJ9.YU0K_oBS-qHGQ8S0ExUYnQ'
 
+  // init the map and add the basemap
   mapboxgl.accessToken = MAPBOX_TOKEN;
   const map = new mapboxgl.Map({
     container: 'map',
@@ -86,96 +85,259 @@
     center: [-121.873869, 36.4391176],
   });
  
-  function addRasterLayer(i, urls) {
-    console.log(urls[i]['TiTiler URL'])
-    map.addSource('kelp' + i, {
-      'type'       : 'raster',
-      'tiles'      : [urls[i]['TiTiler URL']],
-      'tileSize'   : 256,
+  // add the first quarter of data
+  //FIXME: bounds should be fetched from the metadata JSON 'https://d3nlersmdlkzum.cloudfront.net/kelp_cog/metadata.json'
+  const bounds = "-125.15624999999999,34.88593094075315,-120.234375,46.07323062540835".split(',').map(parseFloat);
+
+  const sources = [
+    '1984_01',
+    '1984_02',
+    '1984_03',
+    '1984_04',
+    '1985_01',
+    '1985_02',
+    '1985_03',
+    '1985_04',
+    '1986_01',
+    '1986_02',
+    '1986_03',
+    '1986_04',
+    '1987_01',
+    '1987_02',
+    '1987_03',
+    '1987_04',
+    '1988_01',
+    '1988_02',
+    '1988_03',
+    '1988_04',
+    '1989_01',
+    '1989_02',
+    '1989_03',
+    '1989_04',
+    '1990_01',
+    '1990_02',
+    '1990_03',
+    '1990_04',
+    '1991_01',
+    '1991_02',
+    '1991_03',
+    '1991_04',
+    '1992_01',
+    '1992_02',
+    '1992_03',
+    '1992_04',
+    '1993_01',
+    '1993_02',
+    '1993_03',
+    '1993_04',
+    '1994_01',
+    '1994_02',
+    '1994_03',
+    '1994_04',
+    '1995_01',
+    '1995_02',
+    '1995_03',
+    '1995_04',
+    '1996_01',
+    '1996_02',
+    '1996_03',
+    '1996_04',
+    '1997_01',
+    '1997_02',
+    '1997_03',
+    '1997_04',
+    '1998_01',
+    '1998_02',
+    '1998_03',
+    '1998_04',
+    '1999_01',
+    '1999_02',
+    '1999_03',
+    '1999_04',
+    '2000_01',
+    '2000_02',
+    '2000_03',
+    '2000_04',
+    '2001_01',
+    '2001_02',
+    '2001_03',
+    '2001_04',
+    '2002_01',
+    '2002_02',
+    '2002_03',
+    '2002_04',
+    '2003_01',
+    '2003_02',
+    '2003_03',
+    '2003_04',
+    '2004_01',
+    '2004_02',
+    '2004_03',
+    '2004_04',
+    '2005_01',
+    '2005_02',
+    '2005_03',
+    '2005_04',
+    '2006_01',
+    '2006_02',
+    '2006_03',
+    '2006_04',
+    '2007_01',
+    '2007_02',
+    '2007_03',
+    '2007_04',
+    '2008_01',
+    '2008_02',
+    '2008_03',
+    '2008_04',
+    '2009_01',
+    '2009_02',
+    '2009_03',
+    '2009_04',
+    '2010_01',
+    '2010_02',
+    '2010_03',
+    '2010_04',
+    '2011_01',
+    '2011_02',
+    '2011_03',
+    '2011_04',
+    '2012_01',
+    '2012_02',
+    '2012_03',
+    '2012_04',
+    '2013_01',
+    '2013_02',
+    '2013_03',
+    '2013_04',
+    '2014_01',
+    '2014_02',
+    '2014_03',
+    '2014_04',
+    '2015_01',
+    '2015_02',
+    '2015_03',
+    '2015_04',
+    '2016_01',
+    '2016_02',
+    '2016_03',
+    '2016_04',
+    '2017_01',
+    '2017_02',
+    '2017_03',
+    '2017_04',
+    '2018_01',
+    '2018_02',
+    '2018_03',
+    '2018_04',
+    '2019_01',
+    '2019_02',
+    '2019_03',
+    '2019_04',
+    '2020_01',
+    '2020_02',
+    '2020_03',
+    '2020_04',
+    '2021_01',
+    '2021_02',
+    '2021_03',
+    '2021_04',
+  ]
+
+  let currentImageOffset = 0;
+
+  map.on('load', function() {
+
+    // Find the index of the first symbol layer in the map style
+    const layers = map.getStyle().layers;
+    const firstSymbolLayer = layers.find((layer) => layer.type === 'symbol');
+    const firstSymbolLayerId = firstSymbolLayer.id;
+
+    map.addSource('kelpvtiles', {
+      'type': 'vector',
+      'tiles': ['https://d3nlersmdlkzum.cloudfront.net/kelp_cog/{z}/{x}/{y}.pbf'],
+      'minzoom': 6,
+      'maxzoom': 12,
+      'bounds': bounds
     });
- 
+
     map.addLayer({
-      'id'     : 'kelp' + i,
-      'type'   : 'raster',
-      'source' : 'kelp' + i,
-      'paint'  : {
-        'raster-opacity': 0
+      "id": "kelpvtiles-kelp",
+      "type": "fill",
+      "source": "kelpvtiles",
+      "source-layer": "cog",
+      "paint": {
+        "fill-color": [
+          'interpolate',
+          ['linear'],
+          ['to-number', ['get', sources[currentImageOffset]]],
+          -1,
+          'white',
+          0,
+          '#d0d0d0',
+          1,
+          '#2b1e3e',
+          50,
+          '#383c65',
+          300,
+          '#49838a',
+          500,
+          '#5A9895',
+          700,
+          '#60A195',
+          900,
+          '#5ea28d'
+        ]
       }
-    });
-  }
+    }, firstSymbolLayerId);
 
-  function setRasterLayerVisibility(id, opacity, transition = {duration:0, delay:0}) {
-    map.setPaintProperty(id, 'raster-opacity-transition', transition);
-    map.setPaintProperty(id, 'raster-opacity', opacity);
-  }
+    // start the initial loop
+    doInterval(sources.length);
 
-  function showRasterLayer(id) {
-    setRasterLayerVisibility(id, 1);
-  }
-   
-  function hideRasterLayer(id) {
-    setRasterLayerVisibility(id, 0);
-  }
+  })
 
   function doInterval(frameCount) {
-    let currentImageOffset = 0;
-    let lastImageOffset = 0;
 
-    if( window.currentInterval != undefined && window.currentInterval != 'undefined' ){
-        window.clearInterval(window.currentInterval);
+    if (window.currentInterval != undefined && window.currentInterval != 'undefined') {
+      window.clearInterval(window.currentInterval);
     }
 
     // show and hide one every second, one by one, changing opacity from 0 to 1 at each step
     window.currentInterval = setInterval(() => {
-      lastImageOffset = currentImageOffset;
       currentImageOffset++;
   
       if (currentImageOffset >= frameCount) currentImageOffset = 0;
   
-      hideRasterLayer('kelp' + lastImageOffset);
-      showRasterLayer('kelp' + currentImageOffset);
+      map.setPaintProperty('kelpvtiles-kelp', 'fill-color',
+      [
+          'interpolate',
+          ['linear'],
+          ['to-number', ['get', sources[currentImageOffset]]],
+          -1,
+          'white',
+          0,
+          '#d0d0d0',
+          1,
+          '#2b1e3e',
+          50,
+          '#383c65',
+          300,
+          '#49838a',
+          500,
+          '#5A9895',
+          700,
+          '#60A195',
+          900,
+          '#5ea28d'
+        ]
+      );
 
+      // update the message on the map
       msg = document.getElementById('message');
-      msg.innerText = '' + (currentImageOffset + 1);
+      msg.innerText = '' + (currentImageOffset + 1).toString() + ': ' + sources[currentImageOffset];
     
     }, 1000);
-
   }
-
-  // Start things off by getting the CSV of tile URLs
-  fetch('./tile_urls.csv').then((response) => {
-    if (response.ok) {
-      return response.text();
-    }
-    return Promise.reject(response)
-  }).then(function(text) {
-    const parsed = Papa.parse(text, {header: true, skipEmptyLines: 'greedy'});
-    const urls = parsed.data;
-    console.log(urls);
-
-    // Create and add the map source and map layers from the URLs
-    map.on('load', () => {
-      // load ALL of the tiles at 0 opacity
-      for (let i = 0; i < urls.length; i++) {
-        addRasterLayer(i, urls);
-      }
-
-      // show the very first one
-      showRasterLayer('kelp0');
-
-      // do the interval, but only for the default number of URLs specified at the top
-      doInterval(frameCount);
-
-      // enable the select now that we're all loaded
-      document.getElementById('number').removeAttribute('disabled');
-    });
-
-  }).catch((error) => {
-    console.log('Something went wrong.', error)
-  });
-
-
-
 
 </script>
  
