@@ -83,7 +83,6 @@
  
   // add the first quarter of data
   //FIXME: bounds should be fetched from the metadata JSON 'https://d3nlersmdlkzum.cloudfront.net/kelp_cog/metadata.json'
-  const bounds = "-125.15624999999999,34.88593094075315,-120.234375,46.07323062540835".split(',').map(parseFloat);
 
   const sources = [
     '1984_01',
@@ -242,6 +241,8 @@
 
   let currentImageOffset = 0;
 
+  // const bounds = "-125.15624999999999,34.88593094075315,-120.234375,46.07323062540835".split(',').map(parseFloat);
+
   map.on('load', function() {
 
     // Find the index of the first symbol layer in the map style
@@ -249,48 +250,56 @@
     const firstSymbolLayer = layers.find((layer) => layer.type === 'symbol');
     const firstSymbolLayerId = firstSymbolLayer.id;
 
-    map.addSource('kelpvtiles', {
-      'type': 'vector',
-      'tiles': ['https://d3nlersmdlkzum.cloudfront.net/kelp_cog_complete/{z}/{x}/{y}.pbf'],
-      'minzoom': 6,
-      'maxzoom': 12,
-      'bounds': bounds
+    fetch('https://d3nlersmdlkzum.cloudfront.net/kelp_cog/metadata.json')
+      .then((response) => response.json())
+      .then(function(data) {
+        const bounds = data.bounds.split(',').map(parseFloat);
+
+        map.addSource('kelpvtiles', {
+          'type': 'vector',
+          'tiles': ['https://d3nlersmdlkzum.cloudfront.net/kelp_cog_complete/{z}/{x}/{y}.pbf'],
+          'minzoom': 6,
+          'maxzoom': 12,
+          'bounds': bounds
+        });
+
+        map.addLayer({
+          "id": "kelpvtiles-kelp",
+          "type": "fill",
+          "source": "kelpvtiles",
+          "source-layer": "cog",
+          "paint": {
+            "fill-color": [
+              'interpolate',
+              ['linear'],
+              ['to-number', ['get', sources[currentImageOffset]]],
+              -1,
+              'white',
+              0,
+              '#d0d0d0',
+              1,
+              '#2b1e3e',
+              50,
+              '#383c65',
+              300,
+              '#49838a',
+              500,
+              '#5A9895',
+              700,
+              '#60A195',
+              900,
+              '#5ea28d'
+            ]
+          }
+        }, firstSymbolLayerId);
+
+        // start the initial loop
+        doInterval(sources.length);
+
+      })
+
     });
 
-    map.addLayer({
-      "id": "kelpvtiles-kelp",
-      "type": "fill",
-      "source": "kelpvtiles",
-      "source-layer": "cog",
-      "paint": {
-        "fill-color": [
-          'interpolate',
-          ['linear'],
-          ['to-number', ['get', sources[currentImageOffset]]],
-          -1,
-          'white',
-          0,
-          '#d0d0d0',
-          1,
-          '#2b1e3e',
-          50,
-          '#383c65',
-          300,
-          '#49838a',
-          500,
-          '#5A9895',
-          700,
-          '#60A195',
-          900,
-          '#5ea28d'
-        ]
-      }
-    }, firstSymbolLayerId);
-
-    // start the initial loop
-    doInterval(sources.length);
-
-  })
 
   function doInterval(frameCount) {
 
